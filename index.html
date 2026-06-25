@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/aframe-extras@6.1.1/dist/aframe-extras.min.js"></script>
+
+  <style>
+    /* =====================================================
+       RESET BASE
+    ====================================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+      touch-action: none;
+    }
+
+    body {
+      background-color: #000;
+    }
+
+    body.ar-active {
+      background-color: transparent;
+    }
+
+    #ar-container {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      overflow: hidden;
+    }
+
+    #start-button-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #example-start-button {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+      border: none;
+      padding: 0;
+      background: transparent;
+      cursor: pointer;
+      display: block;
+    }
+
+    #example-start-button img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(0deg);
+      width: 208px;
+      height: 152px;
+      display: block;
+    }
+
+    @keyframes pulse-btn {
+      0%, 100% { transform: translate(-50%, -50%) scale(1);    opacity: 1;    }
+      50%       { transform: translate(-50%, -50%) scale(1.08); opacity: 0.85; }
+    }
+    #example-start-button img {
+      animation: pulse-btn 2s ease-in-out infinite;
+    }
+    #example-start-button:active img {
+      animation: none;
+      transform: translate(-50%, -50%) scale(1.2);
+    }
+
+    body.ar-active #start-button-container {
+      display: none;
+    }
+
+    #frases-container {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 999;
+      pointer-events: none;
+      perspective: 600px;
+      overflow: hidden;
+    }
+
+    body.ar-active #frases-container {
+      display: none;
+    }
+
+    .frase {
+      position: absolute;
+      font-family: 'Arial Black', Arial, sans-serif;
+      font-weight: 900;
+      white-space: nowrap;
+      pointer-events: none;
+      will-change: transform, opacity;
+    }
+
+    .f1  { top:  8%; left:  5%; font-size: 1.1rem; color: #FF3CAC; opacity: 0.9; animation: flotar1 6.0s ease-in-out infinite; }
+    .f2  { top: 15%; left: 55%; font-size: 1.8rem; color: #FFD93D; opacity: 1.0; animation: flotar2 7.5s ease-in-out infinite; }
+    .f3  { top: 28%; left: 10%; font-size: 0.9rem; color: #6BFF6B; opacity: 0.75; animation: flotar3 5.5s ease-in-out infinite; }
+    .f4  { top: 35%; left: 70%; font-size: 1.4rem; color: #00D4FF; opacity: 0.95; animation: flotar4 8.0s ease-in-out infinite; }
+    .f5  { top: 55%; left:  3%; font-size: 2.0rem; color: #FF6B35; opacity: 1.0; animation: flotar5 6.8s ease-in-out infinite; }
+    .f6  { top: 60%; left: 60%; font-size: 1.0rem; color: #C77DFF; opacity: 0.8; animation: flotar6 7.2s ease-in-out infinite; }
+    .f7  { top: 72%; left: 20%; font-size: 1.6rem; color: #FF2D55; opacity: 0.9; animation: flotar7 5.8s ease-in-out infinite; }
+    .f8  { top: 78%; left: 65%; font-size: 1.2rem; color: #00FFB3; opacity: 0.85; animation: flotar8 9.0s ease-in-out infinite; }
+    .f9  { top:  5%; left: 35%; font-size: 1.5rem; color: #FF9F1C; opacity: 1.0; animation: flotar9 6.3s ease-in-out infinite; }
+    .f10 { top: 88%; left: 35%; font-size: 0.85rem; color: #E0FF4F; opacity: 0.7; animation: flotar10 8.5s ease-in-out infinite; }
+
+    @keyframes flotar1 {
+      0%, 100% { transform: perspective(600px) rotateX(10deg) rotateY(-15deg) translateY(0px) translateZ(0px); }
+      50%      { transform: perspective(600px) rotateX(-12deg) rotateY(18deg) translateY(-18px) translateZ(40px); }
+    }
+    @keyframes flotar2 {
+      0%, 100% { transform: perspective(600px) rotateX(-8deg) rotateY(20deg) translateY(0px) translateZ(0px); }
+      50%      { transform: perspective(600px) rotateX(14deg) rotateY(-10deg) translateY(22px) translateZ(60px); }
+    }
+    @keyframes flotar3 {
+      0%, 100% { transform: perspective(600px) rotateX(20deg) rotateY(5deg) translateY(0px) translateZ(0px); }
+      50%      { transform: perspective(600px) rotateX(-6deg) rotateY(-22deg) translateY(-14px) translateZ(30px); }
+    }
+    @keyframes flotar4 {
+      0%, 100% { transform: perspective(600px) rotateX(-15deg) rotateY(-18deg) translateY(0px) translateZ(0px); }
+      50%      { transform: perspective(600px) rotateX(10deg) rotateY(25deg) translateY(20px) translateZ(50px); }
+    }
+    @keyframes flotar5 {
+      0%, 100% { transform: perspective(600px) rotateX(5deg) rotateY(12deg) translateY(0px) translateZ(0px); }
+      50%      { transform: perspective(600px) rotateX(-18deg) rotateY(-8deg) translateY(-25px) translateZ(70px); }
+    }
+    @keyframes flotar6 {
+      0%, 100% { transform: perspective(600px) rotateX(12deg) rotateY(-20deg) translateY(0px) translateZ(0px); }
+      50%      { transform: perspective(600px) rotateX(-5deg) rotateY(15deg) translateY(16px) translateZ(35px); }
+    }
+    @keyframes flotar7 {
+      0%, 100% { transform: perspective(600px) rotateX(-10deg) rotateY(22deg) translateY(0px) translateZ(0px); }
+      50%      { transform: perspective(600px) rotateX(16deg) rotateY(-12deg) translateY(-20px) translateZ(55px); }
+    }
+    @keyframes flotar8 {
+      0%, 100% { transform: perspective(600px) rotateX(18deg) rotateY(8deg) translateY(0px) translateZ(0px); }
+      50%      { transform: perspective(600px) rotateX(-8deg) rotateY(-18deg) translateY(24px) translateZ(45px); }
+    }
+    @keyframes flotar9 {
+      0%, 100% { transform: perspective(600px) rotateX(-20deg) rotateY(-5deg) translateY(0px) translateZ(0px); }
+      50%      { transform: perspective(600px) rotateX(8deg) rotateY(20deg) translateY(-18px) translateZ(65px); }
+    }
+    @keyframes flotar10 {
+      0%, 100% { transform: perspective(600px) rotateX(6deg) rotateY(-25deg) translateY(0px) translateZ(0px); }
+      50%      { transform: perspective(600px) rotateX(-14deg) rotateY(10deg) translateY(20px) translateZ(40px); }
+    }
+
+    #example-scanning-overlay {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      left: 0; right: 0; top: 0; bottom: 0;
+      background: transparent;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    #example-scanning-overlay.hidden {
+      display: none;
+    }
+
+    @media (min-aspect-ratio: 1/1) { #example-scanning-overlay .inner { width: 50vh; height: 50vh; } }
+    @media (max-aspect-ratio: 1/1) { #example-scanning-overlay .inner { width: 80vw; height: 80vw; } }
+
+    #example-scanning-overlay .inner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background:
+        linear-gradient(to right, white 10px, transparent 10px) 0 0,
+        linear-gradient(to right, white 10px, transparent 10px) 0 100%,
+        linear-gradient(to left, white 10px, transparent 10px) 100% 0,
+        linear-gradient(to left, white 10px, transparent 10px) 100% 100%,
+        linear-gradient(to bottom, white 10px, transparent 10px) 0 0,
+        linear-gradient(to bottom, white 10px, transparent 10px) 100% 0,
+        linear-gradient(to top, white 10px, transparent 10px) 0 100%,
+        linear-gradient(to top, white 10px, transparent 10px) 100% 100%;
+      background-repeat: no-repeat;
+      background-size: 40px 40px;
+    }
+
+    #example-scanning-overlay img {
+      opacity: 0.6;
+      width: 90%;
+      align-self: center;
+    }
+
+    #example-scanning-overlay .scanline {
+      position: absolute;
+      width: 100%;
+      height: 10px;
+      background: white;
+      animation: scanMove 2s linear infinite;
+    }
+
+    @keyframes scanMove {
+      0%, 100% { top: 0%; }
+      50%       { top: calc(100% - 10px); }
+    }
+
+    @supports (-webkit-touch-callout: none) {
+      body { background-attachment: scroll; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="frases-container">
+    <span class="frase f1">Toca aquí...</span>
+    <span class="frase f2">Toca aquí...</span>
+    <span class="frase f3">Toca aquí...</span>
+    <span class="frase f4">Toca aquí...</span>
+    <span class="frase f5">Toca aquí...</span>
+    <span class="frase f6">Toca aquí...</span>
+    <span class="frase f7">Toca aquí...</span>
+    <span class="frase f8">Toca aquí...</span>
+    <span class="frase f9">Toca aquí...</span>
+    <span class="frase f10">Toca aquí...</span>
+  </div>
+
+  <div id="start-button-container">
+    <button id="example-start-button" data-action="start">
+      <img src="https://generacionessabiascopy.github.io/asset_GS/boton.png" alt="Iniciar experiencia" />
+    </button>
+  </div>
+
+  <div id="ar-container">
+
+    <div id="example-scanning-overlay" class="hidden">
+      <div class="inner">
+        <img src="https://generacionessabiascopy.github.io/asset_GS/overlay.jpg" alt="Apunta al marcador" />
+        <div class="scanline"></div>
+      </div>
+    </div>
+
+    <a-scene
+      mindar-image="
+        imageTargetSrc: https://generacionessabiascopy.github.io/interactivos/targets7.mind;
+        autoStart: false;
+        showStats: false;
+        uiScanning: #example-scanning-overlay; maxTrack: 3
+      "
+      embedded
+      color-space="sRGB"
+      renderer="colorManagement: true; physicallyCorrectLights: true"
+      vr-mode-ui="enabled: false"
+      device-orientation-permission-ui="enabled: false"
+    >
+
+      <a-assets>
+        <img crossorigin="anonymous" id="icon-web" src="https://generacionessabiascopy.github.io/interactivos/web.png" />
+        <img crossorigin="anonymous" id="icon-left" src="https://generacionessabiascopy.github.io/interactivos/left.png" />
+        <img crossorigin="anonymous" id="icon-right" src="https://generacionessabiascopy.github.io/interactivos/right.png" />
+        <!-- assets PNG del carrusel eliminados — reemplazados por Canvas dinámico (proverbio-plate) -->
+        
+        <img crossorigin="anonymous" id="coke-video-thumb" src="https://generacionessabiascopy.github.io/asset_GS/TOP_VIDEO.jpg" />
+
+        <video crossorigin="anonymous" id="coke-video-mp4" src="https://generacionessabiascopy.github.io/asset_GS/TOP_VIDEO.mp4" playsinline webkit-playsinline preload="auto"></video>
+        
+        <audio crossorigin="anonymous" id="mySound" src="https://generacionessabiascopy.github.io/interactivos/06-01-2027.mp3" preload="auto"></audio>
+        <a-asset-item id="modelo-t0-gltf" src="https://generacionessabiascopy.github.io/3d/audioT0/3DaudioT0.gltf"></a-asset-item>
+        <a-asset-item id="modelo-t1-gltf" src="https://generacionessabiascopy.github.io/3d/videoT1/3DvideoT1.gltf"></a-asset-item>
+        <a-asset-item id="modelo-t2-gltf" src="https://generacionessabiascopy.github.io/3d/carruselT2/3DcarruselT2.gltf"></a-asset-item>
+      </a-assets>
+
+      <a-camera
+        position="0 0 0"
+        look-controls="enabled: false"
+        cursor="fuse: false; rayOrigin: mouse"
+        raycaster="far: 10000; objects: .clickable; interval: 100"
+      ></a-camera>
+
+      <a-entity id="mytarget0" mindar-image-target="targetIndex: 0">
+        <a-plane
+          class="clickable"
+          dynamic-date-plate=""
+          width="0.75"
+          height="0.22"
+          position="0 0.10 0.01"
+          animation="property: position; from: 0 0.05 0.01; to: 0 0.15 0.01; dur: 2200; easing: easeInOutQuad; loop: true; dir: alternate"
+        ></a-plane>
+
+        <a-gltf-model
+          id="modelo-t0"
+          class="clickable"
+          src="#modelo-t0-gltf"
+          position="-0.05 -0.40 0"
+          scale="0.25 0.25 0.25"
+          visible="true"
+          material="shader: flat; color: #FAFAF8"
+          animation__rot="property: rotation; to: 0 360 0; dur: 6000; loop: true; easing: linear"
+          animation__bob="property: position; from: -0.05 -0.40 0; to: -0.10 -0.50 0; dur: 2000; loop: true; dir: alternate; easing: easeInOutSine"
+        ></a-gltf-model>
+
+        <a-sphere id="esfera-t0" class="clickable" radius="0.5" color="green" opacity="0.0" position="0 0.2 0.1"></a-sphere>
+      </a-entity>
+
+      <a-entity id="mytarget1" mindar-image-target="targetIndex: 1">
+
+        <a-gltf-model
+          id="modelo-t1"
+          class="clickable"
+          src="#modelo-t1-gltf"
+          position="0.25 1 0"
+          scale="0.50 0.50 0.50"
+          visible="true"
+          animation__rot="property: rotation; to: 0 280 0; dur: 6000; loop: true; easing: linear"
+          animation__bob="property: position; from: 0.25 1 0; to: 0.20 0.75 0; dur: 2000; loop: true; dir: alternate; easing: easeInOutSine"
+          animation-mixer="clip: *; loop: repeat"
+        ></a-gltf-model>
+
+        <a-entity id="contenedor-video-t1" visible="false" position="0 0 0">
+          <a-plane id="plano-video-t1" width="0.75" height="1.0" position="0 0 0" material="src: #coke-video-mp4; transparent: true"></a-plane>
+        </a-entity>
+
+        <a-entity id="thumbnail-t1" class="clickable" geometry="primitive: plane; width: 0.75; height: 1.0" material="src: #coke-video-thumb; alpha-test: 0.5" position="0 0 0.01"></a-entity>
+      </a-entity>
+
+      <a-entity id="mytarget2" mindar-image-target="targetIndex: 2">
+        <a-plane
+          proverbio-plate="indice: 0"
+          position="0 0 0.001"
+          width="1"
+          height="0.552"
+        ></a-plane>
+
+        <a-gltf-model
+          id="avatar-t2"
+          src="#modelo-t2-gltf"
+          position="-0.15 2.20 0"
+          scale="0.50 0.50 0.50"
+          visible="true"
+          animation__rot="property: rotation; to: 0 180 0; dur: 6000; loop: true; easing: linear"
+          animation__bob="property: position; from: -0.15 2.20 0; to: -0.15 2.25 0; dur: 2000; loop: true; dir: alternate; easing: easeInOutSine"
+          animation-mixer="clip: *; loop: repeat"
+        ></a-gltf-model>
+
+        <a-entity id="portfolio-panel" visible="false" position="0 -0.6 0.01">
+          <a-entity id="portfolio-item0" visible="true">
+            <a-plane class="clickable" proverbio-plate="indice: 1" position="0 0 0" width="1" height="0.552"></a-plane>
+          </a-entity>
+          <a-entity id="portfolio-item1" visible="false">
+            <a-plane class="clickable" proverbio-plate="indice: 2" position="0 0 0" width="1" height="0.552"></a-plane>
+          </a-entity>
+          <a-entity id="portfolio-item2" visible="false">
+            <a-plane class="clickable" proverbio-plate="indice: 3" position="0 0 0" width="1" height="0.552"></a-plane>
+          </a-entity>
+          <a-image id="btn-izquierda" class="clickable" src="#icon-left" position="-0.57 0 0" height="0.15" width="0.15" visible="false"></a-image>
+          <a-image id="btn-derecha" class="clickable" src="#icon-right" position="0.57 0 0" height="0.15" width="0.15" visible="false"></a-image>
+        </a-entity>
+
+        <a-image id="btn-web" class="clickable" src="#icon-web" alpha-test="0.5" position="-0.14 -0.5 0" height="0.4" width="0.4" visible="false"
+                 animation="property: scale; from: 1 1 1; to: 1.2 1.2 1.2; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate"></a-image>
+      </e-entity>
+
+    </a-scene>
+  </div>
+
+  <script>
+    // =====================================================
+    // COMPONENTE: proverbio-plate
+    // Genera textura Canvas con texto de proverbio.
+    // Misma arquitectura que dynamic-date-plate.
+    // Editar el array PROVERBIOS para cambiar el contenido.
+    // =====================================================
+    var PROVERBIOS = [
+      "proverbio0",
+      "proverbio1",
+      "proverbio2",
+      "proverbio3"
+    ];
+
+    AFRAME.registerComponent("proverbio-plate", {
+      schema: { indice: { type: "int", default: 0 } },
+      init: function () {
+        var self  = this;
+        var texto = PROVERBIOS[this.data.indice] || "";
+
+        // Canvas con ratio exacto del plano A-Frame: width=1 height=0.552 → 2048x1130
+        var CW = 2048, CH = 1130;
+        var canvas = document.createElement("canvas");
+        canvas.width  = CW;
+        canvas.height = CH;
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, CW, CH);
+
+        // Fondo traslúcido con esquinas redondeadas
+        ctx.fillStyle = "rgba(0,0,0,0.65)";
+        self.drawRoundedRect(ctx, 20, 20, CW - 40, CH - 40, 40);
+
+        // Tamaño de fuente inicial proporcional al nuevo alto de canvas
+        var fs = 200;
+        ctx.font = "900 " + fs + "px 'Arial Black', Arial, sans-serif";
+
+        // drawSpaced: misma técnica que dynamic-date-plate — tracking controlado + 4 capas de relieve
+        function drawSpaced(text, y, spacing, fillColor, strokeColor) {
+          ctx.textAlign    = "left";
+          ctx.textBaseline = "middle";
+          var totalWidth = 0;
+          for (var i = 0; i < text.length; i++) {
+            totalWidth += ctx.measureText(text[i]).width + spacing;
+          }
+          totalWidth -= spacing;
+          // Si desborda, reducir fuente hasta que quepa
+          while (totalWidth > CW - 120 && fs > 40) {
+            fs -= 4;
+            ctx.font = "900 " + fs + "px 'Arial Black', Arial, sans-serif";
+            totalWidth = 0;
+            for (var j = 0; j < text.length; j++) {
+              totalWidth += ctx.measureText(text[j]).width + spacing;
+            }
+            totalWidth -= spacing;
+          }
+          var x = (CW - totalWidth) / 2;
+          for (var k = 0; k < text.length; k++) {
+            var ch = text[k];
+            if (strokeColor) {
+              ctx.strokeStyle = strokeColor;
+              ctx.lineWidth   = 14;
+              ctx.lineJoin    = "round";
+              ctx.strokeText(ch, x, y);
+            }
+            ctx.fillStyle = fillColor;
+            ctx.fillText(ch, x, y);
+            x += ctx.measureText(ch).width + spacing;
+          }
+        }
+
+        var cy = CH / 2;
+        ctx.font = "900 " + fs + "px 'Arial Black', Arial, sans-serif";
+
+        // Ilusión 3D: 4 capas superpuestas (misma técnica que dynamic-date-plate)
+        drawSpaced(texto, cy + 4,  22, "rgba(255,255,255,0.12)", null);
+        drawSpaced(texto, cy - 4,  22, "rgba(0,0,0,0.35)",       null);
+        drawSpaced(texto, cy,      22, "#FAFAF8", "rgba(255,255,255,0.5)");
+        drawSpaced(texto, cy - 2,  22, "rgba(255,255,255,0.22)", null);
+
+        var texture = new THREE.CanvasTexture(canvas);
+        texture.minFilter      = THREE.LinearFilter;
+        texture.magFilter      = THREE.LinearFilter;
+        texture.generateMipmaps = false;
+        texture.needsUpdate    = true;
+
+        var material = new THREE.MeshBasicMaterial({
+          map: texture, transparent: true, depthWrite: false, side: THREE.DoubleSide
+        });
+
+        function applyMaterial() {
+          var mesh = self.el.getObject3D("mesh");
+          if (mesh) { mesh.material = material; mesh.material.needsUpdate = true; }
+        }
+        self.el.addEventListener("object3dset", applyMaterial);
+        applyMaterial();
+        self.el.sceneEl.addEventListener("loaded", applyMaterial);
+      },
+      drawRoundedRect: function (ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        ctx.fill();
+      }
+    });
+
+    // =====================================================
+    // COMPONENTE: dynamic-date-plate
+    // =====================================================
+    AFRAME.registerComponent("dynamic-date-plate", {
+      schema: { textoManual: { type: "string", default: "" } },
+      init: function () {
+        var self = this;
+        var textoFinal = this.data.textoManual.trim();
+        if (!textoFinal) {
+          var hoy = new Date();
+          textoFinal = hoy.toLocaleDateString("es-ES", {
+            weekday: "long", day: "numeric", month: "long", year: "numeric"
+          });
+        }
+
+        var diaSemana = "";
+        var fechaCorta = "";
+
+        if (this.data.textoManual.trim()) {
+          var palabras = textoFinal.split(" ");
+          diaSemana  = palabras[0].toUpperCase();
+          var dia  = palabras[1] || "01";
+          var mes  = "";
+          var anio = palabras[palabras.length - 1] || "";
+          var meses = { enero:"01", febrero:"02", marzo:"03", abril:"04",
+                        mayo:"05", junio:"06", julio:"07", agosto:"08",
+                        septiembre:"09", octubre:"10", noviembre:"11", diciembre:"12" };
+          for (var i = 0; i < palabras.length; i++) {
+            var m = meses[palabras[i].toLowerCase()];
+            if (m) { mes = m; break; }
+          }
+          fechaCorta = (dia.length === 1 ? "0" + dia : dia) + "/" + mes + "/" + anio;
+        } else {
+          var d = new Date();
+          diaSemana = d.toLocaleDateString("es-ES", { weekday: "long" }).toUpperCase();
+          var dd  = String(d.getDate()).padStart(2,"0");
+          var mm  = String(d.getMonth()+1).padStart(2,"0");
+          var yyyy = d.getFullYear();
+          fechaCorta = dd + "/" + mm + "/" + yyyy;
+        }
+
+        var canvas = document.createElement("canvas");
+        canvas.width  = 2048;
+        canvas.height = 512;
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, 2048, 512);
+
+        ctx.fillStyle = "rgba(0,0,0,0.65)";
+        self.drawRoundedRect(ctx, 20, 20, 2008, 472, 40);
+
+        var fs1 = 180;
+        ctx.font = "900 " + fs1 + "px 'Arial Black', Arial, sans-serif";
+        function drawSpaced(text, y, spacing, fillColor, strokeColor) {
+          ctx.textAlign    = "left";
+          ctx.textBaseline = "middle";
+          var totalWidth = 0;
+          for (var i = 0; i < text.length; i++) {
+            totalWidth += ctx.measureText(text[i]).width + spacing;
+          }
+          totalWidth -= spacing;
+          var x = (2048 - totalWidth) / 2;
+          for (var i = 0; i < text.length; i++) {
+            var ch = text[i];
+            if (strokeColor) {
+              ctx.strokeStyle = strokeColor;
+              ctx.lineWidth   = 14;
+              ctx.lineJoin    = "round";
+              ctx.strokeText(ch, x, y);
+            }
+            ctx.fillStyle = fillColor;
+            ctx.fillText(ch, x, y);
+            x += ctx.measureText(ch).width + spacing;
+          }
+        }
+
+        ctx.font = "900 " + fs1 + "px 'Arial Black', Arial, sans-serif";
+        drawSpaced(diaSemana, 148, 18, "rgba(255,255,255,0.12)", null);
+        drawSpaced(diaSemana, 134, 18, "rgba(0,0,0,0.35)", null);
+        drawSpaced(diaSemana, 140, 18, "#FAFAF8", "rgba(255,255,255,0.5)");
+        drawSpaced(diaSemana, 136, 18, "rgba(255,255,255,0.22)", null);
+
+        ctx.strokeStyle = "rgba(255,255,255,0.25)";
+        ctx.lineWidth   = 3;
+        ctx.beginPath();
+        ctx.moveTo(80, 285); ctx.lineTo(1968, 285);
+        ctx.stroke();
+
+        var fs2 = 140;
+        ctx.font = "900 " + fs2 + "px 'Arial Black', Arial, sans-serif";
+        drawSpaced(fechaCorta, 390, 22, "rgba(255,255,255,0.12)", null);
+        drawSpaced(fechaCorta, 378, 22, "rgba(0,0,0,0.3)", null);
+        drawSpaced(fechaCorta, 384, 22, "#FAFAF8", "rgba(255,255,255,0.5)");
+        drawSpaced(fechaCorta, 380, 22, "rgba(255,255,255,0.2)", null);
+
+        var texture = new THREE.CanvasTexture(canvas);
+        texture.minFilter      = THREE.LinearFilter;
+        texture.magFilter      = THREE.LinearFilter;
+        texture.generateMipmaps = false;
+        texture.needsUpdate    = true;
+
+        var material = new THREE.MeshBasicMaterial({
+          map: texture, transparent: true, depthWrite: false, side: THREE.DoubleSide
+        });
+
+        function applyMaterial() {
+          var mesh = self.el.getObject3D("mesh");
+          if (mesh) { mesh.material = material; mesh.material.needsUpdate = true; }
+        }
+        self.el.addEventListener("object3dset", applyMaterial);
+        applyMaterial();
+        self.el.sceneEl.addEventListener("loaded", applyMaterial);
+      },
+      drawRoundedRect: function (ctx, x, y, w, h, r) {
+        ctx.beginPath();
+        ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h - r);
+        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+        ctx.lineTo(x + r, y + h);
+        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+        ctx.closePath();
+        ctx.fill();
+      }
+    });
+
+    // =====================================================
+    // CONTROLADOR: Target 0
+    // =====================================================
+    AFRAME.registerComponent("target0-controller", {
+      init: function () {
+        const modelo = document.querySelector("#modelo-t0");
+        const esfera = document.querySelector("#esfera-t0");
+        const audio  = document.querySelector("#mySound");
+        let audioTerminado = false;
+
+        this.el.addEventListener("targetFound", function () {
+          console.log("Target 0 encontrado");
+          audioTerminado = false;
+          modelo.setAttribute("visible", true);
+          esfera.setAttribute("color", "green");
+
+          if (!audio.paused) audio.pause();
+          audio.currentTime = 0;
+          audio.play().catch(function (err) {
+            console.warn("Audio bloqueado:", err);
+            modelo.setAttribute("visible", true);
+            esfera.setAttribute("color", "red");
+          });
+        });
+
+        this.el.addEventListener("targetLost", function () {
+          console.log("Target 0 perdido");
+          audio.pause();
+          audio.currentTime = 0;
+          modelo.setAttribute("visible", false);
+          esfera.setAttribute("color", "green");
+          audioTerminado = false;
+        });
+
+        audio.addEventListener("ended", function () {
+          audioTerminado = true;
+          esfera.setAttribute("color", "green");
+          modelo.setAttribute("visible", true);
+        });
+
+        function toggleReproduccion() {
+          if (audioTerminado) return;
+          if (!audio.paused) {
+            audio.pause();
+            esfera.setAttribute("color", "red");
+            modelo.setAttribute("visible", true);
+          } else {
+            audio.play().catch(function (err) { console.warn(err); });
+            esfera.setAttribute("color", "green");
+            modelo.setAttribute("visible", false);
+          }
+        }
+
+        esfera.addEventListener("click", function (evt) { evt.stopPropagation(); toggleReproduccion(); });
+        modelo.addEventListener("click", function (evt) { evt.stopPropagation(); toggleReproduccion(); });
+      }
+    });
+
+    // =====================================================
+    // CONTROLADOR: Target 1 (SIN VARIACIONES DE CONEXIONES)
+    // =====================================================
+    AFRAME.registerComponent("target1-controller", {
+      init: function () {
+        const modelo     = document.querySelector("#modelo-t1");
+        const thumbnail  = document.querySelector("#thumbnail-t1");
+        const contenedor = document.querySelector("#contenedor-video-t1");
+        const video      = document.querySelector("#coke-video-mp4");
+        let videoListenerActivo = false;
+
+        this.el.addEventListener("targetFound", function () {
+          console.log("Target 1 encontrado con nuevo formato 3:4");
+          modelo.setAttribute("visible", true);
+          thumbnail.setAttribute("visible", true);
+          contenedor.setAttribute("visible", false);
+
+          if (!videoListenerActivo) {
+            videoListenerActivo = true;
+
+            thumbnail.addEventListener("click", function () {
+              thumbnail.setAttribute("visible", false);
+              modelo.setAttribute("visible", false);
+              contenedor.setAttribute("visible", true);
+              video.currentTime = 0;
+              video.play().catch(function (err) {
+                console.warn(err);
+                thumbnail.setAttribute("visible", true);
+                modelo.setAttribute("visible", true);
+                contenedor.setAttribute("visible", false);
+              });
+            });
+
+            video.addEventListener("ended", function () {
+              contenedor.setAttribute("visible", false);
+              modelo.setAttribute("visible", true);
+              thumbnail.setAttribute("visible", true);
+            });
+
+            video.addEventListener("error", function (e) {
+              console.error("Error video:", e);
+              contenedor.setAttribute("visible", false);
+              modelo.setAttribute("visible", true);
+              thumbnail.setAttribute("visible", true);
+            });
+          }
+        });
+
+        this.el.addEventListener("targetLost", function () {
+          console.log("Target 1 perdido");
+          video.pause();
+          video.currentTime = 0;
+          contenedor.setAttribute("visible", false);
+          thumbnail.setAttribute("visible", true);
+          modelo.setAttribute("visible", true);
+        });
+      }
+    });
+
+    // =====================================================
+    // CONTROLADOR: Target 2
+    // =====================================================
+    AFRAME.registerComponent("target2-controller", {
+      init: function () {
+        const avatar       = document.querySelector("#avatar-t2");
+        const portfolio    = document.querySelector("#portfolio-panel");
+        const btnIzquierda = document.querySelector("#btn-izquierda");
+        const btnDerecha   = document.querySelector("#btn-derecha");
+        const btnWeb       = document.querySelector("#btn-web");
+
+        const items = [
+          document.querySelector("#portfolio-item0"),
+          document.querySelector("#portfolio-item1"),
+          document.querySelector("#portfolio-item2"),
+        ];
+
+        let currentItem = 0;
+        let animando    = false;
+        let rafId       = null;
+
+        function mostrarItem(index) {
+          items.forEach(function (item, i) {
+            item.setAttribute("visible", i === index);
+          });
+        }
+
+        function animarPortfolio(onDone) {
+          const duracion = 750;
+          const inicio   = performance.now();
+          const yInicio  = -0.6;
+          const yFin     = 0;
+
+          portfolio.setAttribute("visible", true);
+
+          function tick(ahora) {
+            const progreso = Math.min((ahora - inicio) / duracion, 1);
+            const y = yInicio + (yFin - yInicio) * progreso;
+            portfolio.setAttribute("position", "0 " + y.toFixed(4) + " 0.01");
+
+            if (progreso < 1) {
+              rafId = requestAnimationFrame(tick);
+            } else {
+              onDone();
+            }
+          }
+          rafId = requestAnimationFrame(tick);
+        }
+
+        function resetEstado() {
+          if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+          animando    = false;
+          currentItem = 0;
+          avatar.setAttribute("visible", false);
+          avatar.setAttribute("position", "0.25 1 0");
+          portfolio.setAttribute("visible", false);
+          portfolio.setAttribute("position", "0 -0.6 0.01");
+          btnIzquierda.setAttribute("visible", false);
+          btnDerecha.setAttribute("visible", false);
+          mostrarItem(0);
+          btnWeb.setAttribute("visible", false);
+        }
+
+        this.el.addEventListener("targetFound", function () {
+          console.log("Target 2 encontrado");
+          if (animando) return;
+          if (rafId) cancelAnimationFrame(rafId);
+          animando = true;
+
+          avatar.setAttribute("position", "0.25 1 0");
+          avatar.setAttribute("visible", true);
+          portfolio.setAttribute("position", "0 -0.6 0.01");
+          portfolio.setAttribute("visible", false);
+          btnWeb.setAttribute("visible", false);
+
+          setTimeout(function () {
+            animarPortfolio(function () {
+              btnIzquierda.setAttribute("visible", true);
+              btnDerecha.setAttribute("visible", true);
+              animando = false;
+              setTimeout(function () { btnWeb.setAttribute("visible", true); }, 300);
+            });
+          }, 300);
+        });
+
+        this.el.addEventListener("targetLost", function () {
+          console.log("Target 2 perdido");
+          resetEstado();
+        });
+
+        btnIzquierda.addEventListener("click", function () {
+          currentItem = (currentItem + 1) % 3;
+          mostrarItem(currentItem);
+        });
+
+        btnDerecha.addEventListener("click", function () {
+          currentItem = (currentItem - 1 + 3) % 3;
+          mostrarItem(currentItem);
+        });
+
+        btnWeb.addEventListener("click", function () {
+          window.location.href = "https://pideenlinea.elcorral.com/";
+        });
+      }
+    });
+
+    // =====================================================
+    // COREOGRAFÍA GLOBAL DE INICIO DE ESCENA
+    // =====================================================
+    document.addEventListener("DOMContentLoaded", function () {
+      const sceneEl     = document.querySelector("a-scene");
+      const startBtn    = document.querySelector("#example-start-button");
+      const scanOverlay = document.querySelector("#example-scanning-overlay");
+      const mytarget0   = document.querySelector("#mytarget0");
+      const mytarget1   = document.querySelector("#mytarget1");
+      const mytarget2   = document.querySelector("#mytarget2");
+
+      let arSystem  = null;
+      let isStarted = false;
+
+      mytarget0.setAttribute("target0-controller", "");
+      mytarget1.setAttribute("target1-controller", "");
+      mytarget2.setAttribute("target2-controller", "");
+
+      if (sceneEl.hasLoaded) {
+        arSystem = sceneEl.systems["mindar-image-system"];
+      } else {
+        sceneEl.addEventListener("loaded", function () {
+          arSystem = sceneEl.systems["mindar-image-system"];
+        });
+      }
+
+      startBtn.addEventListener("click", function () {
+        if (!arSystem && sceneEl.systems) {
+          arSystem = sceneEl.systems["mindar-image-system"];
+        }
+
+        if (isStarted || !arSystem) return;
+        isStarted = true;
+
+        const audio = document.querySelector("#mySound");
+        const video = document.querySelector("#coke-video-mp4");
+        if (audio) {
+          audio.load();
+          audio.play().then(function () { audio.pause(); }).catch(function (e) { console.log(e); });
+        }
+        if (video) {
+          video.load();
+          video.play().then(function () { video.pause(); }).catch(function (e) { console.log(e); });
+        }
+
+        arSystem.start();
+        document.body.classList.add("ar-active");
+        scanOverlay.classList.remove("hidden");
+      });
+
+      sceneEl.addEventListener("targetFound", function () {
+        scanOverlay.classList.add("hidden");
+      });
+
+      sceneEl.addEventListener("targetLost", function () {
+        const targets = [mytarget0, mytarget1, mytarget2];
+        const alguno  = targets.some(function (t) {
+          return t.components["mindar-image-target"] && t.components["mindar-image-target"].visible;
+        });
+        if (!alguno) scanOverlay.classList.remove("hidden");
+      });
+    });
+  </script>
+</body>
+</html>
